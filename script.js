@@ -6,36 +6,41 @@ fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
   if (!file) return;
 
+  statusEl.textContent = "Loading...";
   resultEl.value = "";
-  statusEl.textContent = "Loading PDF...";
 
-  // pastikan pdfjs ada
-  if (!window.pdfjsLib) {
-    statusEl.textContent = "pdf.js not loaded";
+  // IMAGE
+  if (file.type.startsWith("image/")) {
+    runOCR(file);
     return;
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  // PDF
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  runPDFOCR(pdf);
+});
 
-  statusEl.textContent = `PDF loaded. Pages: ${pdf.numPages}`;
-
-  // set bahasa Arab + Turki
-  const worker = await Tesseract.createWorker({
-    logger: m => {
-      if (m.status === "recognizing text") {
-        statusEl.textContent = `OCR page ${currentPage}/${pdf.numPages} (${Math.round(m.progress * 100)}%)`;
-      }
-    }
-  });
-
+async function runOCR(image) {
+  const worker = await Tesseract.createWorker();
   await worker.loadLanguage("ara+tur");
   await worker.initialize("ara+tur");
 
-  for (var currentPage = 1; currentPage <= pdf.numPages; currentPage++) {
-    statusEl.textContent = `Rendering page ${currentPage}/${pdf.numPages}`;
+  const { data } = await worker.recognize(image);
+  resultEl.value = data.text;
 
-    const page = await pdf.getPage(currentPage);
+  await worker.terminate();
+  statusEl.textContent = "OCR selesai ✅";
+}
+
+async function runPDFOCR(pdf) {
+  const worker = await Tesseract.createWorker();
+  await worker.loadLanguage("ara+tur");
+  await worker.initialize("ara+tur");
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    statusEl.textContent = `OCR page ${i}/${pdf.numPages}`;
+    const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 2 });
 
     const canvas = document.createElement("canvas");
@@ -43,20 +48,12 @@ fileInput.addEventListener("change", async () => {
     canvas.width = viewport.width;
     canvas.height = viewport.height;
 
-    await page.render({
-      canvasContext: ctx,
-      viewport: viewport
-    }).promise;
-
-    statusEl.textContent = `OCR page ${currentPage}/${pdf.numPages}`;
+    await page.render({ canvasContext: ctx, viewport }).promise;
 
     const { data } = await worker.recognize(canvas);
-
-    resultEl.value +=
-      `\n\n===== PAGE ${currentPage} =====\n\n` +
-      data.text;
+    resultEl.value += `\n\n=== PAGE ${i} ===\n\n${data.text}`;
   }
 
   await worker.terminate();
-  statusEl.textContent = "OCR finished ✅";
-});
+  statusEl.textContent = "OCR PDF selesai ✅";
+}
