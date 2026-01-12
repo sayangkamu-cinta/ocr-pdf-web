@@ -1,23 +1,21 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>OCR PDF Arab & Turki</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>OCR Upload Test (Guaranteed)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
+
 <body>
+<h1>OCR Upload Test (Guaranteed)</h1>
 
-<h2>OCR Upload Test (Guaranteed)</h2>
-
-<input type="file" id="fileInput" accept="application/pdf,image/*">
+<input type="file" id="fileInput" accept="application/pdf,image/*" />
 <p id="status">Idle</p>
 
-<textarea id="result" rows="20" style="width:100%;" placeholder="Result will appear here"></textarea>
+<textarea id="output" rows="25" style="width:100%;" placeholder="Result will appear here"></textarea>
 
-<!-- WAJIB URUTANNYA -->
 <script src="pdf.min.js"></script>
 <script src="tesseract.min.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
