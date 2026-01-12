@@ -27,7 +27,18 @@ fileInput.addEventListener("change", async () => {
   let fullText = "";
 
   for (let i = 1; i <= pdf.numPages; i++) {
-    statusEl.textContent = `OCR page ${i}/${pdf.numPages}`;
+    statusEl.textContent = `const worker = await Tesseract.createWorker({
+  workerPath: './tesseract.min.js',
+  corePath: './tesseract.min.js'
+});
+
+await worker.loadLanguage('ara');
+await worker.initialize('ara');
+
+const result = await worker.recognize(canvas);
+fullText += result.data.text;
+
+await worker.terminate(); page ${i}/${pdf.numPages}`;
 
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 2 });
