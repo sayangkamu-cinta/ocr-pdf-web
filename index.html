@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<title>OCR Upload Test (Guaranteed)</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>OCR Upload Test</title>
+  <style>
+    body { font-family: serif; padding: 20px; }
+    textarea { width: 100%; height: 300px; }
+  </style>
 </head>
-
 <body>
+
 <h1>OCR Upload Test (Guaranteed)</h1>
 
-<input type="file" id="fileInput" accept="application/pdf,image/*" />
+<input type="file" id="fileInput" accept=".pdf,image/*">
 <p id="status">Idle</p>
 
-<textarea id="output" rows="25" style="width:100%;" placeholder="Result will appear here"></textarea>
+<textarea id="output" placeholder="Result will appear here"></textarea>
 
+<!-- WAJIB URUTAN INI -->
 <script src="pdf.min.js"></script>
 <script src="tesseract.min.js"></script>
 <script src="script.js"></script>
+
 </body>
 </html>
