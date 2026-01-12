@@ -1,4 +1,6 @@
-pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.min.js";const fileInput = document.getElementById("fileInput");
+pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.min.js";
+
+const fileInput = document.getElementById("fileInput");
 const statusEl = document.getElementById("status");
 const output = document.getElementById("output");
 
@@ -6,39 +8,24 @@ fileInput.addEventListener("change", async () => {
   const file = fileInput.files[0];
   if (!file) return;
 
-  statusEl.textContent = "Processing...";
+  statusEl.textContent = "Loading file...";
+  output.value = "";
 
-  // IMAGE
-  if (file.type.startsWith("image/")) {
-    const result = await Tesseract.recognize(
-      file,
-      "ara+tur",
-      { logger: m => statusEl.textContent = m.status }
-    );
-    output.value = result.data.text;
-    statusEl.textContent = "Done";
-    return;
-  }
-
-  // PDF
   const pdfData = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
 
   let fullText = "";
 
+  const worker = await Tesseract.createWorker({
+    workerPath: './tesseract.min.js',
+    corePath: './tesseract.min.js'
+  });
+
+  await worker.loadLanguage('ara');
+  await worker.initialize('ara');
+
   for (let i = 1; i <= pdf.numPages; i++) {
-    statusEl.textContent = `const worker = await Tesseract.createWorker({
-  workerPath: './tesseract.min.js',
-  corePath: './tesseract.min.js'
-});
-
-await worker.loadLanguage('ara');
-await worker.initialize('ara');
-
-const result = await worker.recognize(canvas);
-fullText += result.data.text;
-
-await worker.terminate(); page ${i}/${pdf.numPages}`;
+    statusEl.textContent = `OCR page ${i}/${pdf.numPages}`;
 
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 2 });
@@ -50,16 +37,11 @@ await worker.terminate(); page ${i}/${pdf.numPages}`;
 
     await page.render({ canvasContext: ctx, viewport }).promise;
 
-    const result = await Tesseract.recognize(
-      canvas,
-      "ara+tur",
-      { logger: () => {} }
-    );
-
-    fullText += `\n=== PAGE ${i} ===\n`;
-    fullText += result.data.text;
+    const result = await worker.recognize(canvas);
+    fullText += `\n=== PAGE ${i} ===\n` + result.data.text;
     output.value = fullText;
   }
 
+  await worker.terminate();
   statusEl.textContent = "Done";
 });
