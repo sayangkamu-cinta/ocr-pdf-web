@@ -1,4 +1,4 @@
-const fileInput = document.getElementById("fileInput");
+pdfjsLib.GlobalWorkerOptions.workerSrc = "./pdf.min.js";const fileInput = document.getElementById("fileInput");
 const statusEl = document.getElementById("status");
 const output = document.getElementById("output");
 
