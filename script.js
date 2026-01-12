@@ -1,61 +1,64 @@
 const fileInput = document.getElementById("fileInput");
+const output = document.getElementById("output");
 const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
 
-/* ===== FIX PDF.JS WORKER ===== */
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+fileInput.addEventListener("change", handleFile);
 
-fileInput.addEventListener("change", async () => {
+async function handleFile() {
   const file = fileInput.files[0];
   if (!file) return;
 
-  statusEl.textContent = "Processing...";
-  resultEl.value = "";
+  output.value = "";
+  statusEl.textContent = "Loading file...";
 
-  try {
-    if (file.type === "application/pdf") {
-      await ocrPDF(file);
-    } else if (file.type.startsWith("image/")) {
-      await ocrImage(file);
-    } else {
-      statusEl.textContent = "File tidak didukung";
-    }
-  } catch (e) {
-    statusEl.textContent = "ERROR: " + e.message;
-    console.error(e);
+  if (file.type === "application/pdf") {
+    await ocrPDF(file);
+  } else {
+    await ocrImage(file);
   }
-});
+}
 
-async function createWorker() {
+/* ================= OCR WORKER (ARAB ONLY) ================= */
+
+async function createWorkerArabic() {
   const worker = await Tesseract.createWorker({
     logger: m => statusEl.textContent = m.status,
     langPath: "https://tessdata.projectnaptha.com/4.0.0"
   });
-  await worker.loadLanguage("ara+tur");
-  await worker.initialize("ara+tur");
+
+  await worker.loadLanguage("ara");
+  await worker.initialize("ara");
+
+  await worker.setParameters({
+    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+    preserve_interword_spaces: "1",
+    textord_heavy_nr: "1"
+  });
+
   return worker;
 }
 
+/* ================= IMAGE OCR ================= */
+
 async function ocrImage(file) {
-  const worker = await createWorker();
+  const worker = await createWorkerArabic();
   const { data } = await worker.recognize(file);
-  resultEl.value = data.text;
+  output.value = data.text;
   await worker.terminate();
-  statusEl.textContent = "OCR selesai ✅";
 }
+
+/* ================= PDF OCR (VISION ONLY) ================= */
 
 async function ocrPDF(file) {
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-
-  const worker = await createWorker();
+  const worker = await createWorkerArabic();
 
   for (let i = 1; i <= pdf.numPages; i++) {
-    statusEl.textContent = `OCR halaman ${i}/${pdf.numPages}`;
+    statusEl.textContent = `OCR page ${i}/${pdf.numPages}`;
 
     const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale: 2 });
+    const viewport = page.getViewport({ scale: 3 });
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -65,9 +68,11 @@ async function ocrPDF(file) {
     await page.render({ canvasContext: ctx, viewport }).promise;
 
     const { data } = await worker.recognize(canvas);
-    resultEl.value += `\n\n=== PAGE ${i} ===\n${data.text}`;
+
+    output.value += `\n\n=== PAGE ${i} ===\n`;
+    output.value += data.text;
   }
 
   await worker.terminate();
-  statusEl.textContent = "OCR PDF selesai ✅";
+  statusEl.textContent = "OCR finished";
 }
