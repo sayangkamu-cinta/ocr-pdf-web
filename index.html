@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Guaranteed Upload OCR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body { font-family: Arial, sans-serif; padding: 20px; }
+input { display: block; margin-bottom: 10px; }
+textarea { width: 100%; height: 280px; }
+</style>
+</head>
+<body>
+
+<h2>OCR Upload Test (Guaranteed)</h2>
+
+<input type="file" id="fileInput" accept="image/*,.pdf">
+<p id="status">Idle</p>
+<textarea id="output" placeholder="Result will appear here"></textarea>
+
+<script src="pdf.min.js"></script>
+<script src="tesseract.min.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
